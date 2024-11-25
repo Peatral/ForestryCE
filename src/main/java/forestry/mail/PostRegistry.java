@@ -73,11 +73,6 @@ public class PostRegistry implements IPostRegistry {
 
 			pobox.setDirty();
 			cachedPOBoxes.put(add, pobox);
-
-			Player player = PlayerUtil.getPlayer(world, add.getPlayerProfile());
-			if (player != null) {
-				NetworkUtil.sendToPlayer(new PacketPOBoxInfoResponse(pobox.getPOBoxInfo()), (ServerPlayer) player);
-			}
 		}
 
 		return pobox;
