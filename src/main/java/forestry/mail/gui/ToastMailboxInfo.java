@@ -3,6 +3,7 @@ package forestry.mail.gui;
 import com.mojang.blaze3d.systems.RenderSystem;
 import forestry.api.ForestryConstants;
 import forestry.core.config.Constants;
+import forestry.core.config.ForestryConfig;
 import forestry.mail.POBoxInfo;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.toasts.Toast;
@@ -30,6 +31,10 @@ public class ToastMailboxInfo implements Toast {
 
     @Override
     public Visibility render(GuiGraphics guiGraphics, ToastComponent toastComponent, long timeSinceLastVisible) {
+        if (!ForestryConfig.CLIENT.mailAlertsEnabled.get()) {
+            return Visibility.HIDE;
+        }
+
         guiGraphics.blit(BACKGROUND_SPRITE, 0, 0, 0, 96, this.width(), this.height());
 
         List<Icons> icons = new ArrayList<>(2);
