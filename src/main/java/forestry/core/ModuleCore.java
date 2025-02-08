@@ -116,6 +116,7 @@ public class ModuleCore extends BlankForestryModule {
 		event.enqueueWork(() -> {
 			((ForestryModuleManager) IForestryApi.INSTANCE.getModuleManager()).setupApi();
 			PluginManager.registerCircuits();
+			PluginManager.registerMail();
 			EntityDataSerializers.registerSerializer(GameProfileDataSerializer.INSTANCE);
 			registerComposts();
 		});

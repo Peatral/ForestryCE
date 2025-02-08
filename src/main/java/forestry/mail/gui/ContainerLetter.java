@@ -13,6 +13,11 @@ package forestry.mail.gui;
 import javax.annotation.Nullable;
 import java.util.Iterator;
 
+import forestry.api.IForestryApi;
+import forestry.api.mail.ILetter;
+import forestry.api.mail.v2.address.IAddress;
+import forestry.api.mail.v2.carrier.ICarrierType;
+import forestry.mail.v2.MailUtil;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -27,16 +32,13 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import forestry.Forestry;
 import forestry.api.mail.EnumAddressee;
-import forestry.api.mail.ILetter;
 import forestry.api.mail.IMailAddress;
-import forestry.api.mail.IPostalCarrier;
 import forestry.api.mail.ITradeStation;
 import forestry.api.mail.ITradeStationInfo;
 import forestry.api.mail.PostManager;
 import forestry.core.gui.ContainerItemInventory;
 import forestry.core.gui.slots.SlotFiltered;
 import forestry.core.utils.NetworkUtil;
-import forestry.mail.Letter;
 import forestry.mail.features.MailMenuTypes;
 import forestry.mail.inventory.ItemInventoryLetter;
 import forestry.mail.network.packets.PacketLetterInfoResponsePlayer;
@@ -44,7 +46,7 @@ import forestry.mail.network.packets.PacketLetterInfoResponseTrader;
 import forestry.mail.network.packets.PacketLetterTextSet;
 
 public class ContainerLetter extends ContainerItemInventory<ItemInventoryLetter> implements ILetterInfoReceiver {
-	private EnumAddressee carrierType = EnumAddressee.PLAYER;
+	private ICarrierType<?> carrierType;
 	@Nullable
 	private ITradeStationInfo tradeInfo = null;
 
@@ -57,6 +59,8 @@ public class ContainerLetter extends ContainerItemInventory<ItemInventoryLetter>
 
 	public ContainerLetter(int windowId, Player player, ItemInventoryLetter inventory) {
 		super(windowId, inventory, player.getInventory(), 17, 145, MailMenuTypes.LETTER.menuType());
+
+		carrierType = MailUtil.PLAYER_CARRIER.get();
 
 		// Init slots
 
@@ -81,9 +85,9 @@ public class ContainerLetter extends ContainerItemInventory<ItemInventoryLetter>
 
 		// Set recipient type
 		ILetter letter = inventory.getLetter();
-		IMailAddress recipient = letter.getRecipient();
+		IAddress<?> recipient = letter.getRecipient();
 		if (recipient != null) {
-			this.carrierType = recipient.getType();
+			this.carrierType = recipient.carrier();
 		}
 	}
 
@@ -106,7 +110,7 @@ public class ContainerLetter extends ContainerItemInventory<ItemInventoryLetter>
 		return inventory.getLetter();
 	}
 
-	public void setCarrierType(EnumAddressee type) {
+	public void setCarrierType(ICarrierType<?, ?> type) {
 		this.carrierType = type;
 	}
 
@@ -115,21 +119,21 @@ public class ContainerLetter extends ContainerItemInventory<ItemInventoryLetter>
 	}
 
 	public void advanceCarrierType() {
-		Iterator<IPostalCarrier> it = PostManager.postRegistry.getRegisteredCarriers().values().iterator();
+		Iterator<ICarrierType<?, ?>> it = IForestryApi.INSTANCE.getMailManager().getCarrierTypes().iterator();
 		while (it.hasNext()) {
-			if (it.next().getType().equals(carrierType)) {
+			if (it.next().equals(carrierType)) {
 				break;
 			}
 		}
 
-		IPostalCarrier postal;
+		ICarrierType<?, ?> postal;
 		if (it.hasNext()) {
 			postal = it.next();
 		} else {
-			postal = PostManager.postRegistry.getRegisteredCarriers().values().iterator().next();
+			postal = IForestryApi.INSTANCE.getMailManager().getCarrierTypes().iterator().next();
 		}
 
-		setCarrierType(postal.getType());
+		setCarrierType(postal);
 	}
 
 	public void handleRequestLetterInfo(Player player, String recipientName, EnumAddressee type) {

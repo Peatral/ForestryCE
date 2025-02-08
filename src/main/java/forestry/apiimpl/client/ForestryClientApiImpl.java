@@ -1,9 +1,7 @@
 package forestry.apiimpl.client;
 
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
 
-import forestry.api.ForestryConstants;
 import forestry.api.client.IForestryClientApi;
 import forestry.api.client.ITextureManager;
 import forestry.api.client.apiculture.IBeeClientManager;
@@ -12,7 +10,6 @@ import forestry.api.client.lepidopterology.IButterflyClientManager;
 import forestry.api.client.plugin.IClientHelper;
 import forestry.apiimpl.client.plugin.ClientHelper;
 import forestry.core.render.ForestryTextureManager;
-import forestry.modules.ModuleUtil;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;

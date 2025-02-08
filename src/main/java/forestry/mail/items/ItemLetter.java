@@ -30,9 +30,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import forestry.api.core.IItemSubtype;
-import forestry.api.mail.ILetter;
 import forestry.core.items.ItemWithGui;
-import forestry.mail.Letter;
 import forestry.mail.gui.ContainerLetter;
 import forestry.mail.inventory.ItemInventoryLetter;
 

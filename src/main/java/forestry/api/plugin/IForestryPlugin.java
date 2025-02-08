@@ -66,6 +66,9 @@ public interface IForestryPlugin {
 	default void registerPollen(IPollenRegistration pollen) {
 	}
 
+	default void registerMail(IMailRegistration mail) {
+	}
+
 	/**
 	 * Called after all species are registered to register client-only resources for species.
 	 *

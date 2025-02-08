@@ -1,178 +1,164 @@
-/*******************************************************************************
- * Copyright (c) 2011-2014 SirSengir.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl-3.0.txt
- *
- * Various Contributors including, but not limited to:
- * SirSengir (original work), CovertJaguar, Player, Binnie, MysteriousAges
- ******************************************************************************/
 package forestry.mail;
 
-import com.google.common.base.Preconditions;
-
-import javax.annotation.Nullable;
-
+import com.google.common.collect.ImmutableMap;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import forestry.api.mail.ILetter;
+import forestry.api.mail.v2.carrier.ICarrierType;
+import forestry.mail.v2.IWatchable;
+import forestry.mail.v2.LetterUtils;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.saveddata.SavedData;
 
-import forestry.api.mail.EnumAddressee;
-import forestry.api.mail.ILetter;
-import forestry.api.mail.IMailAddress;
-import forestry.api.mail.PostManager;
 import forestry.core.inventory.InventoryAdapter;
 import forestry.core.utils.InventoryUtil;
 
-public class POBox extends SavedData implements Container {
-	public static final String SAVE_NAME = "pobox_";
-	public static final short SLOT_SIZE = 84;
+import java.util.*;
 
-	@Nullable
-	private IMailAddress address;
-	private final InventoryAdapter letters = new InventoryAdapter(SLOT_SIZE, "Letters").disableAutomation();
+public class POBox implements Container, IWatchable {
+    public static final short SLOT_SIZE = 84;
 
-	public POBox(IMailAddress address) {
-		if (address.getType() != EnumAddressee.PLAYER) {
-			throw new IllegalArgumentException("POBox address must be a player");
-		}
+    public static final Codec<POBox> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.list(ItemStack.CODEC).fieldOf("letters").forGetter(pobox -> InventoryUtil.getStacks(pobox.letters))
+    ).apply(instance, POBox::new));
 
-		this.address = address;
-	}
+    private final InventoryAdapter letters = new InventoryAdapter(SLOT_SIZE, "Letters").disableAutomation();
 
-	public POBox(CompoundTag tag) {
-		if (tag.contains("address")) {
-			this.address = new MailAddress(tag.getCompound("address"));
-		}
+    private final Set<Watcher> updateWatchers = new HashSet<>();
 
-		letters.read(tag);
-	}
+    public POBox() {
+    }
 
-	@Override
-	public CompoundTag save(CompoundTag compoundNBT) {
-		if (this.address != null) {
-			CompoundTag nbt = new CompoundTag();
-			this.address.write(nbt);
-			compoundNBT.put("address", nbt);
-		}
-		letters.write(compoundNBT);
-		return compoundNBT;
-	}
+    private POBox(List<ItemStack> letterItems) {
+        for (int i = 0; i < letterItems.size(); i++) {
+            ItemStack stack = letterItems.get(i);
+            if (!stack.isEmpty()) {
+                letters.setItem(i, stack);
+            }
+        }
+    }
 
-	public boolean storeLetter(ItemStack letterstack) {
-		ILetter letter = PostManager.postRegistry.getLetter(letterstack);
-		Preconditions.checkNotNull(letter, "Letter stack must be a valid letter");
+    public boolean storeLetter(ItemStack letterstack) {
+        Optional<ILetter> letterOptional = LetterUtils.getLetter(letterstack);
 
-		// Mark letter as processed
-		letter.setProcessed(true);
-		letter.invalidatePostage();
-		CompoundTag compoundNBT = new CompoundTag();
-		letter.write(compoundNBT);
-		letterstack.setTag(compoundNBT);
+        if (letterOptional.isEmpty()) {
+            return false;
+        }
 
-		this.setDirty();
+        ILetter letter = letterOptional.get();
 
-		return InventoryUtil.tryAddStack(letters, letterstack, true);
-	}
+        // Mark letter as processed
+        letter.setProcessed(true);
+        letter.invalidatePostage();
 
-	public POBoxInfo getPOBoxInfo() {
-		int playerLetters = 0;
-		int tradeLetters = 0;
-		for (int i = 0; i < letters.getContainerSize(); i++) {
-			if (letters.getItem(i).isEmpty()) {
-				continue;
-			}
-			CompoundTag tagCompound = letters.getItem(i).getTag();
-			if (tagCompound != null) {
-				ILetter letter = new Letter(tagCompound);
-				if (letter.getSender().getType() == EnumAddressee.PLAYER) {
-					playerLetters++;
-				} else {
-					tradeLetters++;
-				}
-			}
-		}
+        LetterUtils.setLetter(letterstack, letter);
 
-		return new POBoxInfo(playerLetters, tradeLetters);
-	}
+        this.setDirty();
 
-	/* IINVENTORY */
+        return InventoryUtil.tryAddStack(letters, letterstack, true);
+    }
 
-	@Override
-	public boolean isEmpty() {
-		return letters.isEmpty();
-	}
+    public POBoxInfo getPOBoxInfo() {
+        Map<ICarrierType<?>, Integer> letterCounts = new HashMap<>();
+        for (int i = 0; i < letters.getContainerSize(); i++) {
+            if (letters.getItem(i).isEmpty()) {
+                continue;
+            }
+            CompoundTag tagCompound = letters.getItem(i).getTag();
+            if (tagCompound != null) {
+                CompoundTag tag = tagCompound.getCompound("letter");
+                ILetter letter = Letter.CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow().getFirst();
+                ICarrierType<?> carrier = letter.getSender().carrier();
+                int amount = letterCounts.getOrDefault(carrier, 0) + 1;
+                letterCounts.put(carrier, amount);
+            }
+        }
 
-	@Override
-	public void setDirty() {
-		super.setDirty();
-		letters.setChanged();
-	}
+        return new POBoxInfo(ImmutableMap.copyOf(letterCounts));
+    }
 
-	@Override
-	public void setItem(int var1, ItemStack var2) {
-		this.setDirty();
-		letters.setItem(var1, var2);
-	}
+    /* IINVENTORY */
 
-	@Override
-	public int getContainerSize() {
-		return letters.getContainerSize();
-	}
+    @Override
+    public boolean isEmpty() {
+        return letters.isEmpty();
+    }
 
-	@Override
-	public ItemStack getItem(int var1) {
-		return letters.getItem(var1);
-	}
+    @Override
+    public void setDirty() {
+        updateWatchers.forEach(Watcher::onWatchableUpdate);
+        letters.setChanged();
+    }
 
-	@Override
-	public ItemStack removeItem(int var1, int var2) {
-		return letters.removeItem(var1, var2);
-	}
+    @Override
+    public boolean registerUpdateWatcher(Watcher updateWatcher) {
+        return updateWatchers.add(updateWatcher);
+    }
 
-	@Override
-	public ItemStack removeItemNoUpdate(int index) {
-		return letters.removeItemNoUpdate(index);
-	}
+    @Override
+    public boolean unregisterUpdateWatcher(Watcher updateWatcher) {
+        return updateWatchers.remove(updateWatcher);
+    }
 
-	//	@Override
-	//	public String getName() {
-	//		return letters.getName();
-	//	}
+    @Override
+    public void setItem(int var1, ItemStack var2) {
+        this.setDirty();
+        letters.setItem(var1, var2);
+    }
 
-	@Override
-	public int getMaxStackSize() {
-		return letters.getMaxStackSize();
-	}
+    @Override
+    public int getContainerSize() {
+        return letters.getContainerSize();
+    }
 
-	@Override
-	public void setChanged() {
+    @Override
+    public ItemStack getItem(int var1) {
+        return letters.getItem(var1);
+    }
 
-	}
+    @Override
+    public ItemStack removeItem(int var1, int var2) {
+        return letters.removeItem(var1, var2);
+    }
 
-	@Override
-	public boolean stillValid(Player var1) {
-		return letters.stillValid(var1);
-	}
+    @Override
+    public ItemStack removeItemNoUpdate(int index) {
+        return letters.removeItemNoUpdate(index);
+    }
 
-	@Override
-	public void startOpen(Player var1) {
-	}
+    @Override
+    public int getMaxStackSize() {
+        return letters.getMaxStackSize();
+    }
 
-	@Override
-	public void stopOpen(Player var1) {
-	}
+    @Override
+    public void setChanged() {
 
-	@Override
-	public boolean canPlaceItem(int i, ItemStack itemstack) {
-		return letters.canPlaceItem(i, itemstack);
-	}
+    }
 
-	@Override
-	public void clearContent() {
-	}
+    @Override
+    public boolean stillValid(Player var1) {
+        return letters.stillValid(var1);
+    }
+
+    @Override
+    public void startOpen(Player var1) {
+    }
+
+    @Override
+    public void stopOpen(Player var1) {
+    }
+
+    @Override
+    public boolean canPlaceItem(int i, ItemStack itemstack) {
+        return letters.canPlaceItem(i, itemstack);
+    }
+
+    @Override
+    public void clearContent() {
+    }
 
 }

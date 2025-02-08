@@ -1,17 +1,11 @@
-/*******************************************************************************
- * Copyright (c) 2011-2014 SirSengir.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl-3.0.txt
- *
- * Various Contributors including, but not limited to:
- * SirSengir (original work), CovertJaguar, Player, Binnie, MysteriousAges
- ******************************************************************************/
 package forestry.mail;
 
-public record POBoxInfo(int playerLetters, int tradeLetters) {
-	public boolean hasMail() {
-		return playerLetters > 0 || tradeLetters > 0;
-	}
+import forestry.api.mail.v2.carrier.ICarrierType;
+
+import java.util.Map;
+
+public record POBoxInfo(Map<ICarrierType<?>, Integer> letters) {
+    public boolean hasMail() {
+        return letters.values().stream().anyMatch(i -> i > 0);
+    }
 }

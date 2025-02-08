@@ -11,6 +11,7 @@ import forestry.api.genetics.IGeneticManager;
 import forestry.api.genetics.alleles.IAlleleManager;
 import forestry.api.genetics.filter.IFilterManager;
 import forestry.api.genetics.pollen.IPollenManager;
+import forestry.api.mail.v2.IMailManager;
 import forestry.api.modules.IModuleManager;
 import forestry.api.plugin.IGeneticRegistration;
 
@@ -60,4 +61,6 @@ public interface IForestryApi {
 	ICircuitManager getCircuitManager();
 
 	IPollenManager getPollenManager();
+
+	IMailManager getMailManager();
 }

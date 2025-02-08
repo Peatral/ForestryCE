@@ -15,6 +15,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceLoader;
 
+import forestry.api.mail.v2.carrier.ICarrierType;
+import forestry.mail.v2.MailManager;
+import forestry.mail.v2.MailRegistration;
 import net.minecraft.resources.ResourceLocation;
 
 import com.mojang.datafixers.util.Pair;
@@ -353,5 +356,21 @@ public class PluginManager {
 			}
 		}
 		((ForestryClientApiImpl) IForestryClientApi.INSTANCE).setButterflyManager(new ButterflyClientManager(butterflyTextures));
+	}
+
+	public static void registerMail() {
+		MailRegistration registration = new MailRegistration();
+
+		// Register SPECIES TYPES, karyotypes, filter rules and set up taxonomy
+		for (IForestryPlugin plugin : LOADED_PLUGINS) {
+			plugin.registerMail(registration);
+		}
+
+		ImmutableMap<ResourceLocation, ICarrierType<?>> carrierTypes = registration.buildCarriers();
+
+		Forestry.LOGGER.debug("Registered {} carrier types: {}", carrierTypes.size(), Arrays.toString(carrierTypes.keySet().toArray(new ResourceLocation[0])));
+
+		MailManager mailManager = new MailManager(carrierTypes);
+		((ForestryApiImpl) IForestryApi.INSTANCE).setMailManager(mailManager);
 	}
 }

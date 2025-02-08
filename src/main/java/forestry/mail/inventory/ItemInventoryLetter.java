@@ -10,23 +10,20 @@
  ******************************************************************************/
 package forestry.mail.inventory;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 
+import forestry.api.mail.ILetter;
+import forestry.mail.v2.LetterUtils;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
 
 import forestry.api.core.IErrorSource;
 import forestry.api.core.IError;
-import forestry.api.mail.ILetter;
 import forestry.api.core.ForestryError;
 import forestry.core.inventory.ItemInventory;
 import forestry.core.items.ItemWithGui;
 import forestry.core.utils.SlotUtil;
-import forestry.mail.Letter;
-import forestry.mail.LetterProperties;
 import forestry.mail.items.ItemStamp;
 
 public class ItemInventoryLetter extends ItemInventory implements IErrorSource {
@@ -34,9 +31,7 @@ public class ItemInventoryLetter extends ItemInventory implements IErrorSource {
 
 	public ItemInventoryLetter(Player player, ItemStack itemstack) {
 		super(player, 0, itemstack);
-		CompoundTag tagCompound = itemstack.getTag();
-		Preconditions.checkNotNull(tagCompound);
-		letter = new Letter(tagCompound);
+		letter = LetterUtils.getLetter(itemstack).orElseThrow();
 	}
 
 	public ILetter getLetter() {
@@ -45,29 +40,25 @@ public class ItemInventoryLetter extends ItemInventory implements IErrorSource {
 
 	public void onLetterClosed() {
 		ItemStack parent = getParent();
-		setParent(LetterProperties.closeLetter(parent, letter));
+		//setParent(LetterProperties.closeLetter(parent, letter));
 	}
 
 	public void onLetterOpened() {
 		ItemStack parent = getParent();
-		setParent(LetterProperties.openLetter(parent));
+		//setParent(LetterProperties.openLetter(parent));
 	}
 
 	@Override
 	public ItemStack removeItem(int index, int count) {
 		ItemStack result = letter.removeItem(index, count);
-		CompoundTag tagCompound = getParent().getTag();
-		Preconditions.checkNotNull(tagCompound);
-		letter.write(tagCompound);
+		LetterUtils.setLetter(getParent(), letter);
 		return result;
 	}
 
 	@Override
 	public void setItem(int index, ItemStack itemstack) {
 		letter.setItem(index, itemstack);
-		CompoundTag tagCompound = getParent().getTag();
-		Preconditions.checkNotNull(tagCompound);
-		letter.write(tagCompound);
+		LetterUtils.setLetter(getParent(), letter);
 	}
 
 	@Override

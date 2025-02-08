@@ -46,8 +46,6 @@ public interface IPostRegistry {
 	@Nullable
 	IPostalCarrier getCarrier(EnumAddressee uid);
 
-	Map<EnumAddressee, IPostalCarrier> getRegisteredCarriers();
-
 	/* TRADE STATIONS */
 	void deleteTradeStation(ServerLevel world, IMailAddress address);
 

@@ -5,6 +5,10 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import forestry.mail.v2.carrier.ForestryCarriers;
+import forestry.mail.v2.carrier.PlayerCarrierType;
+import forestry.mail.v2.carrier.TradeStationCarrierType;
+import forestry.api.plugin.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.ItemStack;
@@ -35,15 +39,6 @@ import forestry.api.genetics.alleles.ForestryAlleles;
 import forestry.api.genetics.alleles.TreeChromosomes;
 import forestry.api.lepidopterology.ForestryButterflySpecies;
 import forestry.api.lepidopterology.genetics.ButterflyLifeStage;
-import forestry.api.plugin.IApicultureRegistration;
-import forestry.api.plugin.IArboricultureRegistration;
-import forestry.api.plugin.ICircuitRegistration;
-import forestry.api.plugin.IErrorRegistration;
-import forestry.api.plugin.IFarmingRegistration;
-import forestry.api.plugin.IForestryPlugin;
-import forestry.api.plugin.IGeneticRegistration;
-import forestry.api.plugin.ILepidopterologyRegistration;
-import forestry.api.plugin.IPollenRegistration;
 import forestry.apiculture.ApicultureFilterRule;
 import forestry.apiculture.ApicultureFilterRuleType;
 import forestry.apiculture.CrepuscularActivityType;
@@ -411,6 +406,12 @@ public class DefaultForestryPlugin implements IForestryPlugin {
 	@Override
 	public void registerClient(Consumer<Consumer<IClientRegistration>> registrar) {
 		registrar.accept(new DefaultForestryClientRegistration());
+	}
+
+	@Override
+	public void registerMail(IMailRegistration mail) {
+		mail.registerCarrier(ForestryCarriers.PLAYER, PlayerCarrierType::new);
+		mail.registerCarrier(ForestryCarriers.TRADESTATION, TradeStationCarrierType::new);
 	}
 
 	@Override

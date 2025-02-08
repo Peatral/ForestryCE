@@ -1,63 +1,52 @@
-/*******************************************************************************
- * Copyright 2011-2014 SirSengir
- *
- * This work (the API) is licensed under the "MIT" License, see LICENSE.txt for details.
- ******************************************************************************/
 package forestry.api.mail;
+
+import forestry.api.mail.v2.address.IAddress;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
-import net.minecraft.world.Container;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.core.NonNullList;
-import net.minecraft.network.chat.Component;
+public interface ILetter extends Container {
+    IAddress<?> getSender();
+    @Nullable
+    IAddress<?> getRecipient();
 
-import forestry.api.core.INbtWritable;
+    NonNullList<ItemStack> getPostage();
 
-public interface ILetter extends Container, INbtWritable {
+    void setProcessed(boolean flag);
 
-	NonNullList<ItemStack> getPostage();
+    boolean isProcessed();
 
-	void setProcessed(boolean flag);
+    boolean isMailable();
 
-	boolean isProcessed();
+    void setSender(IAddress<?> address);
 
-	boolean isMailable();
+    boolean hasRecipient();
 
-	void setSender(IMailAddress address);
+    void setRecipient(@Nullable IAddress<?> address);
 
-	IMailAddress getSender();
+    void setText(String text);
 
-	boolean hasRecipient();
+    String getText();
 
-	void setRecipient(@Nullable IMailAddress address);
+    void addTooltip(List<Component> list);
 
-	@Nullable
-	IMailAddress getRecipient();
+    boolean isPostPaid();
 
-	String getRecipientString();
+    int requiredPostage();
 
-	void setText(String text);
+    void invalidatePostage();
 
-	String getText();
+    NonNullList<ItemStack> getAttachments();
 
-	void addTooltip(List<Component> list);
+    void addAttachment(ItemStack itemstack);
 
-	boolean isPostPaid();
+    void addAttachments(NonNullList<ItemStack> itemstacks);
 
-	int requiredPostage();
+    int countAttachments();
 
-	void invalidatePostage();
-
-	NonNullList<ItemStack> getAttachments();
-
-	void addAttachment(ItemStack itemstack);
-
-	void addAttachments(NonNullList<ItemStack> itemstacks);
-
-	int countAttachments();
-
-	void addStamps(ItemStack stamps);
-
+    void addStamps(ItemStack stamps);
 }

@@ -19,7 +19,6 @@ import net.minecraft.world.entity.player.Player;
 
 import forestry.api.modules.IForestryPacketClient;
 import forestry.core.network.PacketIdClient;
-import forestry.mail.POBoxInfo;
 
 public record PacketPOBoxInfoResponse(int playerLetters, int tradeLetters, boolean silent) implements IForestryPacketClient {
 	public PacketPOBoxInfoResponse(POBoxInfo info, boolean silent) {

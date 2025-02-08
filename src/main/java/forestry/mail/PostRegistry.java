@@ -17,8 +17,6 @@ import java.util.Map;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
@@ -26,17 +24,13 @@ import com.mojang.authlib.GameProfile;
 
 import forestry.Forestry;
 import forestry.api.mail.EnumAddressee;
-import forestry.api.mail.ILetter;
 import forestry.api.mail.IMailAddress;
 import forestry.api.mail.IPostOffice;
 import forestry.api.mail.IPostRegistry;
 import forestry.api.mail.IPostalCarrier;
 import forestry.api.mail.ITradeStation;
 import forestry.api.mail.PostManager;
-import forestry.core.utils.NetworkUtil;
-import forestry.core.utils.PlayerUtil;
 import forestry.mail.features.MailItems;
-import forestry.mail.network.packets.PacketPOBoxInfoResponse;
 
 public class PostRegistry implements IPostRegistry {
 	@Nullable
